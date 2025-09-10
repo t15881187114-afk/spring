@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>《春》· 沉浸式预习</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f7f9;
+            --text-color: #34495e;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --border-radius: 15px;
+            --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.8;
+        }
+
+        .main-container {
+            display: flex;
+            max-width: 1600px;
+            margin: 20px auto;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel, .right-panel {
+            padding: 30px;
+        }
+
+        .left-panel {
+            flex: 3;
+            overflow-y: auto;
+            height: calc(100vh - 80px);
+            background: var(--panel-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            position: relative; /* For positioning the textbook info */
+        }
+
+        .right-panel {
+            flex: 1;
+            height: fit-content;
+        }
+
+        .textbook-info {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        h1, h2 {
+            color: var(--primary-color);
+            text-align: center;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .article-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(236, 245, 239, 0.5); /* Faint, semi-transparent green */
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .article-content p {
+            text-indent: 2em;
+            font-size: 1.1em;
+        }
+
+        .section-title {
+            font-size: 1.5em; /* Reduced font size */
+            font-weight: bold;
+            color: #2c3e50; /* Darker, more elegant color */
+            text-align: center;
+            margin: 20px 0 20px;
+        }
+
+        .interactive-sentence {
+            color: #16a085; /* A different shade of green */
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .interactive-sentence:hover {
+            color: var(--secondary-color);
+        }
+
+        .control-section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            background: rgba(227, 236, 245, 0.7); /* Faint, semi-transparent blue */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .control-section h4 {
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 10px;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .gradient-btn {
+            background-image: linear-gradient(to right, #2ecc71 0%, #3498db 51%, #2ecc71 100%);
+            margin: 5px 0;
+            padding: 12px 20px;
+            text-align: center;
+            text-transform: uppercase;
+            transition: 0.5s;
+            background-size: 200% auto;
+            color: white;
+            border-radius: 10px;
+            display: block;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .gradient-btn:hover {
+            background-position: right center;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .gradient-btn:disabled {
+            background-image: linear-gradient(to right, #95a5a6 0%, #bdc3c7 51%, #95a5a6 100%);
+            cursor: not-allowed;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.visible {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 0; /* Removed padding */
+            border: none; /* Removed border for a cleaner look */
+            width: 80%;
+            max-width: 700px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            position: relative;
+            animation: fadeIn 0.5s;
+            overflow: hidden; /* Ensures content respects border-radius */
+        }
+
+        #modal-video, #generated-image {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            display: block; /* Removes bottom space under image/video */
+        }
+
+        #analysis-content {
+            padding: 30px;
+            font-size: 1.1em;
+        }
+
+        .ai-creation-description {
+            font-size: 0.9em;
+            color: #555;
+            padding: 0 0 15px 0;
+            line-height: 1.6;
+        }
+
+        @keyframes fadeIn {
+            from {opacity: 0; transform: scale(0.9);}
+            to {opacity: 1; transform: scale(1);}
+        }
+
+        .modal-close-btn {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.4);
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+            transition: background-color 0.3s ease;
+            z-index: 10; /* Ensure it's above video/image */
+        }
+
+        .modal-close-btn:hover, .modal-close-btn:focus {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+        }
+
+        #ai-prompt {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
+        .info-grid {
+            display: flex;
+            gap: 20px;
+        }
+        .info-grid .info-item {
+            flex: 1;
+        }
+        .info-grid h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 10px;
+            color: var(--primary-color);
+        }
+        .info-grid p {
+            font-size: 0.95em;
+            line-height: 1.7;
+            text-align: justify;
+            margin: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .left-panel, .right-panel {
+                flex: 1;
+                height: auto;
+            }
+            .left-panel {
+                max-height: 60vh;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                font-size: 14px;
+            }
+            .left-panel, .right-panel {
+                padding: 20px;
+            }
+            h1 {
+                font-size: 1.8em;
+                margin-top: 30px; /* Pushes title down on mobile to avoid overlap */
+            }
+            .textbook-info {
+                top: 15px;
+                left: 20px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="left-panel">
+            <p class="textbook-info">人教版语文七年级上册第一课</p>
+            <h1>《春》</h1>
+            <h2>朱自清</h2>
+            <div class="article-content">
+                <div class="article-section">
+                    <h3 class="section-title" id="panchun">盼春</h3>
+                    <p>盼望着，盼望着，东风来了，春天的脚步近了。</p>
+                    <p>一切都像刚睡醒的样子，欣欣然张开了眼。山朗润起来了，水涨起来了，太阳的脸红起来了。</p>
+                </div>
+                
+                <div class="article-section">
+                    <h3 class="section-title" id="huichun">绘春</h3>
+                    <p><span class="interactive-sentence" data-key="caotu">小草偷偷地从土里钻出来，嫩嫩的，绿绿的。</span>园子里，田野里，瞧去，一大片一大片满是的。坐着，躺着，打两个滚，踢几脚球，赛几趟跑，捉几回迷藏。风轻悄悄的，草软绵绵的。</p>
+                    <p><span class="interactive-sentence" data-key="huatu">桃树、杏树、梨树，你不让我，我不让你，都开满了花赶趟儿。红的像火，粉的像霞，白的像雪。</span>花里带着甜味儿；闭了眼，树上仿佛已经满是桃儿、杏儿、梨儿。花下成千成百的蜜蜂嗡嗡地闹着，大小的蝴蝶飞来飞去。野花遍地是：杂样儿，有名字的，没名字的，散在草丛里，像眼睛，像星星，还眨呀眨的。</p>
+                    <p>“吹面不寒杨柳风”，不错的，像母亲的手抚摸着你。风里带来些新翻的泥土的气息，混着青草味儿，还有各种花的香，都在微微润湿的空气里酝酿。鸟儿将巢安在繁花嫩叶当中，高兴起来了，呼朋引伴地卖弄清脆的喉咙，唱出宛转的曲子，与轻风流水应和着。牛背上牧童的短笛，这时候也成天嘹亮地响着。</p>
+                    <p>雨是最寻常的，一下就是三两天。可别恼。看，<span class="interactive-sentence" data-key="yutu">像牛毛，像花针，像细丝，密密地斜织着，人家屋顶上全笼着一层薄烟。</span>树叶儿却绿得发亮，小草儿也青得逼你的眼。傍晚时候，上灯了，一点点黄晕的光，烘托出一片安静而和平的夜。在乡下，小路上，石桥边，有撑起伞慢慢走着的人，地里还有工作的农民，披着蓑，戴着笠。他们的房屋，稀稀疏疏的，在雨里静默着。</p>
+                    <p>天上风筝渐渐多了，地上孩子也多了。城里乡下，家家户户，老老小小，他们也赶趟儿似的，一个个都出来了。舒活舒活筋骨，抖擞抖擞精神，各做各的一份事去。“一年之计在于春”，刚起头儿，有的是工夫，有的是希望。</p>
+                </div>
+
+                <div class="article-section">
+                    <h3 class="section-title" id="zanchun">赞春</h3>
+                    <p><span class="interactive-sentence" data-key="sangebiyu">春天像刚落地的娃娃，从头到脚都是新的，它生长着。</span></p>
+                    <p><span class="interactive-sentence" data-key="sangebiyu">春天像小姑娘，花枝招展的，笑着，走着。</span></p>
+                    <p><span class="interactive-sentence" data-key="sangebiyu">春天像健壮的青年，有铁一般的胳膊和腰脚，领着我们上前去。</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <h3>互动体验区</h3>
+            <div class="control-section">
+                <h4>AI朗读</h4>
+                <button id="reading-btn" class="gradient-btn">播放朗读</button>
+                <audio id="spring-audio" src="朗诵.mp3" preload="auto"></audio>
+            </div>
+
+            <div class="control-section">
+                <h4>AI可视化体验</h4>
+                <div class="button-grid">
+                    <button class="gradient-btn video-btn" data-video-src="https://player.bilibili.com/player.html?bvid=BV1vbY5zvEbN&page=1&autoplay=1&high_quality=1">作者简介</button>
+                    <button class="gradient-btn video-btn" data-video-src="https://player.bilibili.com/player.html?bvid=BV1vbY5zvEjt&page=1&autoplay=1&high_quality=1">创作背景</button>
+                    <button class="gradient-btn video-btn" data-video-src="https://player.bilibili.com/player.html?bvid=BV1vbY5zvEg2&page=1&autoplay=1&high_quality=1">全文智现</button>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h4>AI创作</h4>
+                <p class="ai-creation-description">改变风格可以在文字后面加描述，如：熊猫（动漫），小房子（卡通）</p>
+                <textarea id="ai-prompt" rows="4" placeholder="请在课文标了颜色的句子选择一句你最喜欢的，然后进行仿写，并生成对应的图片"></textarea>
+                <button id="generate-image-btn" class="gradient-btn" style="width: 100%;">生成图片</button>
+            </div>
+
+            <div class="control-section">
+                <h4>AI实时交流</h4>
+                <button id="start-chat-btn" class="gradient-btn" style="width: 100%;">与“朱自清”对话</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="video-modal" class="modal">
+        <div class="modal-content" style="width: 80%; max-width: 880px; height: 80%; max-height: 550px;">
+            <span class="modal-close-btn">&times;</span>
+            <iframe id="modal-iframe" style="width: 100%; height: 100%;" src="" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+        </div>
+    </div>
+
+    <div id="analysis-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <div id="analysis-content"></div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <img id="generated-image" src="" alt="AI生成图片">
+        </div>
+    </div>
+
+    <div id="api-key-modal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close-btn">&times;</span>
+            <h3>请输入通行码以获得更好的生图效果</h3>
+            <input type="text" id="api-key-input" style="width: 100%; padding: 10px; margin-bottom: 15px;">
+            <button id="api-key-submit" class="gradient-btn">确定</button>
+        </div>
+    </div>
+
+    <div id="chat-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; padding: 20px; text-align: center;">
+            <span class="modal-close-btn">&times;</span>
+            <div id="chat-container" style="position: relative;">
+                <img id="zhu-ziqing-img" src="zhu_ziqing.jpg" alt="朱自清" style="width: 100%; border-radius: 10px; max-height: 60vh;">
+                <div id="user-speech-text" style="position: absolute; top: 10px; left: 10px; right: 10px; background: rgba(52, 152, 219, 0.8); color: white; padding: 10px; border-radius: 8px; font-size: 1em; min-height: 30px; display: none; align-items: center; justify-content: center; text-align: right;"></div>
+                <div id="ai-response-text" style="position: absolute; bottom: 10px; left: 10px; right: 10px; background: rgba(0, 0, 0, 0.6); color: white; padding: 15px; border-radius: 8px; font-size: 1.1em; min-height: 50px; display: flex; align-items: center; justify-content: center;">你好，我是朱自清。很高兴与你谈谈《春》。</div>
+            </div>
+            <button id="mic-btn" class="gradient-btn" style="width: 80px; height: 80px; border-radius: 50%; margin-top: 20px; font-size: 2em; padding: 0;">🎤</button>
+            <p id="mic-status" style="margin-top: 10px; color: #666;">点击麦克风开始对话</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Generic Modal Close Function ---
+            const closeModal = (modal) => {
+                if (!modal) return;
+                modal.classList.remove('visible');
+            };
+
+            // --- Video Modal Logic ---
+            const videoModal = document.getElementById('video-modal');
+            const modalIframe = document.getElementById('modal-iframe');
+            const videoButtons = document.querySelectorAll('.video-btn');
+
+            if (videoModal && modalIframe && videoButtons.length) {
+                videoButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const videoSrc = button.getAttribute('data-video-src');
+                        if (videoSrc) {
+                            modalIframe.src = videoSrc;
+                            videoModal.classList.add('visible');
+                        }
+                    });
+                });
+
+                const closeVideoModal = () => {
+                    videoModal.classList.remove('visible');
+                    modalIframe.src = ""; // Stop the video by clearing the src
+                };
+                const videoCloseBtn = videoModal.querySelector('.modal-close-btn');
+                if (videoCloseBtn) {
+                    videoCloseBtn.addEventListener('click', closeVideoModal);
+                }
+                videoModal.addEventListener('click', (e) => {
+                    if (e.target === videoModal) {
+                        closeVideoModal();
+                    }
+                });
+            }
+
+            // --- Setup for other modals ---
+            const otherModals = document.querySelectorAll('.modal:not(#video-modal):not(#chat-modal)');
+            otherModals.forEach(modal => {
+                const closeBtn = modal.querySelector('.modal-close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', () => closeModal(modal));
+                }
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal(modal);
+                    }
+                });
+            });
+
+            // --- Chat Modal Logic ---
+            const chatModal = document.getElementById('chat-modal');
+            const startChatBtn = document.getElementById('start-chat-btn');
+            const micBtn = document.getElementById('mic-btn');
+            const micStatus = document.getElementById('mic-status');
+            const aiResponseText = document.getElementById('ai-response-text');
+            const userSpeechText = document.getElementById('user-speech-text');
+            let recognition;
+            let isChatting = false;
+            let audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = 'zh-CN';
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    micStatus.textContent = '正在聆听...';
+                    micBtn.style.background = '#e74c3c';
+                };
+
+                recognition.onend = () => {
+                    if (isChatting) {
+                        setTimeout(() => recognition.start(), 300); // Automatically restart listening
+                    }
+                };
+
+                recognition.onresult = async (event) => {
+                    const speechResult = event.results[0][0].transcript.trim();
+                    if (speechResult === '') return;
+
+                    userSpeechText.textContent = `“${speechResult}”`;
+                    userSpeechText.style.display = 'flex';
+                    aiResponseText.textContent = '思考中...';
+
+                    try {
+                        // Stop listening while we process the request
+                        recognition.stop();
+
+                        const response = await fetch('https://spring-rho-jade.vercel.app/api/chat', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ text: speechResult }),
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`服务器错误: ${response.statusText}`);
+                        }
+
+                        const audioData = await response.arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(audioData);
+                        
+                        // Play the audio
+                        const source = audioContext.createBufferSource();
+                        source.buffer = audioBuffer;
+                        source.connect(audioContext.destination);
+                        source.start(0);
+
+                        // For simplicity, we are not displaying the AI's text response from the backend
+                        // but you could easily extend the backend to return both text and audio.
+                        aiResponseText.textContent = '...'; // Clear thinking message
+
+                    } catch (error) {
+                        console.error('Error communicating with backend:', error);
+                        aiResponseText.textContent = '抱歉，我遇到了一点问题。';
+                    } finally {
+                        // Resume listening if still in chat mode
+                        
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    if (event.error !== 'no-speech') {
+                        console.error('Speech recognition error:', event.error);
+                        micStatus.textContent = '识别出错，请重试';
+                    }
+                };
+
+            } else {
+                console.warn('Speech Recognition not supported.');
+                micStatus.textContent = '浏览器不支持语音识别';
+                if(micBtn) micBtn.disabled = true;
+            }
+
+            function startChat() {
+                if (recognition && !isChatting) {
+                    isChatting = true;
+                    micBtn.textContent = '■';
+                    micStatus.textContent = '对话中...点击按钮结束';
+                    userSpeechText.style.display = 'none';
+                    aiResponseText.textContent = '你好，我是朱自清。';
+                    recognition.start();
+                }
+            }
+
+            function stopChat() {
+                if (recognition && isChatting) {
+                    isChatting = false;
+                    recognition.stop();
+                    micBtn.textContent = '🎤';
+                    micStatus.textContent = '点击麦克风开始对话';
+                    userSpeechText.style.display = 'none';
+                    aiResponseText.textContent = '再见！';
+                }
+            }
+
+            if (micBtn) {
+                micBtn.addEventListener('click', () => {
+                    if (isChatting) {
+                        stopChat();
+                    } else {
+                        startChat();
+                    }
+                });
+            }
+
+            if (startChatBtn) {
+                startChatBtn.addEventListener('click', () => {
+                    chatModal.classList.add('visible');
+                    aiResponseText.textContent = '你好，我是朱自清。很高兴与你谈谈《春》。';
+                    userSpeechText.style.display = 'none';
+                });
+            }
+
+            const chatCloseBtn = chatModal.querySelector('.modal-close-btn');
+            if (chatCloseBtn) {
+                chatCloseBtn.addEventListener('click', () => {
+                    closeModal(chatModal);
+                    stopChat();
+                });
+            }
+            chatModal.addEventListener('click', (e) => {
+                if (e.target === chatModal) {
+                    closeModal(chatModal);
+                    stopChat();
+                }
+            });
+
+            // Audio Controls
+            const readingBtn = document.getElementById('reading-btn');
+            const springAudio = document.getElementById('spring-audio');
+            if (readingBtn && springAudio) {
+                readingBtn.addEventListener('click', () => {
+                    if (springAudio.paused) {
+                        springAudio.play();
+                        readingBtn.textContent = '暂停朗读';
+                    } else {
+                        springAudio.pause();
+                        readingBtn.textContent = '播放朗读';
+                    }
+                });
+            }
+
+            // Analysis Modal Controls
+            const analysisModal = document.getElementById('analysis-modal');
+            const analysisContent = document.getElementById('analysis-content');
+            const interactiveSentences = document.querySelectorAll('.interactive-sentence');
+            const analysisData = {
+                caotu: "<strong>手法赏析：</strong>运用了“偷偷地”、“钻”等拟人手法，赋予小草人的情態，生动形象地写出了春草破土而出的过程和旺盛的生命力，表达了作者对春天的喜爱之情。",
+                huatu: "<strong>手法赏析：</strong>运用了拟人（“你不让我，我不让你”）、排比（“红的像火，粉的像霞，白的像雪”）和通感（“花里带着甜味儿”）等多种修辞手法，描绘了一幅繁花似锦、生机勃勃的春日画卷，极富感染力。",
+                yutu: "<strong>手法赏析：</strong>运用了排比和比喻（“像牛毛，像花针，像细丝”），将春雨描绘得既细密又润泽，极具画面感，烘托出一种安静、祥和的氛围。",
+                sangebiyu: "<strong>手法赏析：</strong>运用了三个精彩的排比和比喻，将抽象的春天具体化、形象化。分别将春天比作“刚落地的娃娃”、“小姑娘”和“健壮的青年”，层层递进，揭示了春天“新”、“美”、“力”的内涵，充满了奋发向上的精神力量。"
+            };
+            if(analysisModal && analysisContent && interactiveSentences.length) {
+                interactiveSentences.forEach(sentence => {
+                    sentence.addEventListener('click', () => {
+                        const key = sentence.getAttribute('data-key');
+                        if (analysisData[key]) {
+                            analysisContent.innerHTML = analysisData[key];
+                            analysisModal.classList.add('visible');
+                        }
+                    });
+                });
+            }
+
+            // AI Image Generation with Translation
+            const imageModal = document.getElementById('image-modal');
+            const generatedImage = document.getElementById('generated-image');
+            const aiPromptInput = document.getElementById('ai-prompt');
+            const generateBtn = document.getElementById('generate-image-btn');
+
+            if (generateBtn && aiPromptInput && imageModal && generatedImage) {
+                generateBtn.addEventListener('click', async () => {
+                    const chinesePrompt = aiPromptInput.value;
+                    if (!chinesePrompt) {
+                        alert('请输入描述性句子！');
+                        return;
+                    }
+
+                    generateBtn.textContent = '正在翻译和生成中...';
+                    generateBtn.disabled = true;
+
+                    try {
+                        // Step 1: Translate Chinese to English
+                        const translateResponse = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(chinesePrompt)}&langpair=zh-CN|en-GB`);
+                        const translateData = await translateResponse.json();
+                        const englishPrompt = translateData.responseData.translatedText;
+
+                        if (!englishPrompt) {
+                            throw new Error('翻译失败，请稍后再试。');
+                        }
+
+                        // Step 2: Generate image with the translated prompt
+                        const encodedPrompt = encodeURIComponent(englishPrompt);
+                        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1280&height=720&model=flux1&enhance=true`;
+                        
+                        generatedImage.src = imageUrl;
+                        imageModal.classList.add('visible');
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('生成图片时出错，请检查网络连接或稍后再试。');
+                    } finally {
+                        generateBtn.textContent = '生成图片';
+                        generateBtn.disabled = false;
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>
